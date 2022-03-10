@@ -1,0 +1,44 @@
+FATİH AKGÜNDÜZ 150117032
+
+2)
+
+UPDATE Player
+SET Age = FLOOR(DATEDIFF(day, Birthdate, GETDATE()) / 365);
+
+
+3)
+
+SELECT p.PlayerID, (FirstName + ' ' + LastName) as FullName
+FROM Player p
+INNER JOIN PlayerTeam pt ON pt.PlayerID = p.PlayerID
+INNER JOIN Team t ON t.TeamID = pt.TeamID
+WHERE (t.Name = 'Beşiktaş') AND
+(p.FirstName NOT LIKE '%nec%') AND (p.Age < (SELECT AVG(Age) FROM Player));
+
+
+4)
+
+UPDATE Team
+SET City = City + '#p' + (SELECT CONVERT(nvarchar(3),(SELECT COUNT(pt.PlayerID) 
+FROM PlayerTeam pt
+WHERE pt.TeamID = Team.TeamID
+GROUP BY pt.TeamID))) + '#g' + (SELECT CONVERT(nvarchar(3),COUNT(g.MatchID)) TeamGoals
+FROM Goals g
+JOIN [dbo].[Match] m ON m.MatchID = g.MatchID 
+JOIN PlayerTeam pt ON g.PlayerID = pt.PlayerID
+WHERE ( Season = '13-14' AND 
+(HomeTeamID = Team.TeamID OR VisitingTeamID = Team.TeamID)) AND
+ ((IsOwnGoal = '0' AND pt.TeamID = Team.TeamID) OR
+  (IsOwnGoal = '1' AND pt.TeamID != Team.TeamID ))
+GROUP BY Season)
+
+
+5)
+
+SELECT TOP(10) p.PlayerID, p.FirstName, p.LastName, 
+COUNT(p.PlayerID) as NumberOfGoals,  COUNT(p.PlayerID) / 34.0 as 'AvgGoalPerMatch'
+FROM Goals g
+JOIN Player p ON p.PlayerID = g.PlayerID
+WHERE IsOwnGoal = '0'
+GROUP BY p.PlayerID, p.FirstName, p.LastName
+ORDER BY NumberOfGoals DESC;
